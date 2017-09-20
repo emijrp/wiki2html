@@ -129,8 +129,11 @@ def images(wiki, path, wikifile):
         if imagewidth:
             imagethumblink = '%s/thumbs/%s-%s' % (imagepath, imagewidth, imagename)
             if os.path.exists("images/%s" % (imagename)):
-                print("    Resizing images/%s into images/thumbs/%s-%s" % (imagename, imagewidth, imagename))
-                os.system("convert images/%s -resize %sx%s images/thumbs/%s-%s" % (imagename, imagewidth_, imagewidth_, imagewidth, imagename))
+                if os.path.exists('images/thumbs/%s-%s' % (imagewidth, imagename)):
+                    print("    Thumb exists images/thumbs/%s-%s Skiping..." % (imagewidth, imagename))
+                else:
+                    print("    Resizing images/%s into images/thumbs/%s-%s" % (imagename, imagewidth, imagename))
+                    os.system("convert images/%s -resize %sx%s images/thumbs/%s-%s" % (imagename, imagewidth_, imagewidth_, imagewidth, imagename))
             else:
                 print("    No exists images/%s" % (imagename))
         
