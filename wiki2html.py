@@ -66,10 +66,16 @@ def sections(wiki, wikifile):
 
 def templates(wiki, path, wikifile):
     templates = re.findall(r'(?im)\{\{([^\{\}]+?)\}\}', wiki)
+    templatepath = './templates'
+    """if os.path.exists('%s/rootpath.wiki' % (path)):
+        f = open('%s/rootpath.wiki' % (path))
+        templatepath = f.read().strip() + '/templates'
+        f.close()"""
+    
     for template in templates:
         templatename = template.split('|')[0].split('\n')[0].strip()
         templateparameters = template.split('|')[1:]
-        wikitemplate = readwikifile(path, '%s.wiki' % templatename.lower())
+        wikitemplate = readwikifile(templatepath, '%s.wiki' % templatename.lower())
         # remove noinclude
         wikitemplate = re.sub(r'(?im)<noinclude>.*?</noinclude>', r'', wikitemplate)
         # clean includeonly
@@ -94,10 +100,10 @@ def templates(wiki, path, wikifile):
     return wiki
 
 def images(wiki, path, wikifile):
-    imagepath = '.'
-    if os.path.exists('%s/imagepath.wiki' % (path)):
-        f = open('%s/imagepath.wiki' % (path))
-        imagepath = f.read().strip()
+    imagepath = './images'
+    if os.path.exists('%s/rootpath.wiki' % (path)):
+        f = open('%s/rootpath.wiki' % (path))
+        imagepath = f.read().strip() + '/images'
         f.close()
     
     images = re.findall(r'(?im)\[\[File:([^\[\]]+?)\]\]', wiki)
@@ -279,10 +285,23 @@ def itemlist(wiki, wikifile):
     
     return wiki
 
+def indexrootpath(wiki, path, wikifile):
+    indexrootpath = '.'
+    if os.path.exists('%s/rootpath.wiki' % (path)):
+        f = open('%s/rootpath.wiki' % (path))
+        indexrootpath = f.read().strip() + '/index'
+        f.close()
+    pathtofile = '%s/%s' % (path, wikifile)
+    if os.path.exists(pathtofile):
+        wiki = re.sub('<!-- indexrootpath -->.*?<!-- /indexrootpath -->', '%s' % (indexrootpath), wiki)
+    
+    return wiki
+
 def timestamp(wiki, path, wikifile):
     pathtofile = '%s/%s' % (path, wikifile)
-    dt = datetime.datetime.utcfromtimestamp(os.path.getmtime(pathtofile))
-    wiki = re.sub('<!-- timestamp -->.*?<!-- /timestamp -->', '<!-- timestamp -->%s<!-- /timestamp -->' % (dt.strftime('%Y-%m-%d %H:%M:%S')), wiki)
+    if os.path.exists(pathtofile):
+        dt = datetime.datetime.utcfromtimestamp(os.path.getmtime(pathtofile))
+        wiki = re.sub('<!-- timestamp -->.*?<!-- /timestamp -->', '%s' % (dt.strftime('%Y-%m-%d %H:%M:%S')), wiki)
     
     return wiki
 
@@ -375,7 +394,19 @@ def search(wiki, path, wikifile):
     
     return entry
 
+def relpathcssjs(html, path):
+    rootpath = '.'
+    if os.path.exists('%s/rootpath.wiki' % (path)):
+        f = open('%s/rootpath.wiki' % (path))
+        rootpath = f.read().strip()
+        f.close()
+    rootpath += '/'
+    html = re.sub('<link rel="stylesheet" href="', '<link rel="stylesheet" href="%s' % (rootpath), html)
+    html = re.sub('<script src="', '<script src="%s' % (rootpath), html)
+    return html
+
 def wiki2html(wiki, path, wikifile):
+    wiki = indexrootpath(wiki, path, wikifile)
     wiki = includes(wiki, wikifile)
     wiki = sections(wiki, wikifile)
     wiki = templates(wiki, path, wikifile)
@@ -395,6 +426,7 @@ def wiki2html(wiki, path, wikifile):
 def processfile(path, wikifile):
     wiki = readwikifile(path, wikifile)
     html = wiki2html(wiki, path, wikifile)
+    html = relpathcssjs(html, path)
     #print(html)
     htmlfile = '%s.html' % wikifile.split('.wiki')[0]
     print('Saving %s in %s' % (wikifile, htmlfile))
