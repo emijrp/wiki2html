@@ -65,37 +65,41 @@ def sections(wiki, wikifile):
     return wiki
 
 def templates(wiki, path, wikifile):
-    templates = re.findall(r'(?im)\{\{([^\{\}]+?)\}\}', wiki)
-    templatepath = './templates'
-    """if os.path.exists('%s/rootpath.wiki' % (path)):
-        f = open('%s/rootpath.wiki' % (path))
-        templatepath = f.read().strip() + '/templates'
-        f.close()"""
-    
-    for template in templates:
-        templatename = template.split('|')[0].split('\n')[0].strip()
-        templateparameters = template.split('|')[1:]
-        wikitemplate = readwikifile(templatepath, '%s.wiki' % templatename.lower())
-        # remove noinclude
-        wikitemplate = re.sub(r'(?im)<noinclude>.*?</noinclude>', r'', wikitemplate)
-        # clean includeonly
-        wikitemplate = re.sub(r'(?im)<includeonly>(.*?)</includeonly>', r'\1', wikitemplate)
-        c = 1
-        for templateparameter in templateparameters:
-            parametername = templateparameter.split('=')[0].strip()
-            try:
-                parametervalue = templateparameter.split('=')[1].strip()
-            except:
-                parametervalue = u''
-            wikitemplate = wikitemplate.replace('{{{%s}}}' % (parametername), parametervalue)
-            wikitemplate = wikitemplate.replace('{{{%s|}}}' % (parametername), parametervalue)
-            c += 1
-        #remove empty parameters when {{{X|}}}
-        wikitemplate = re.sub(r'{{{\d+\|\s*?}}}', '', wikitemplate)
+    templatetypes = [
+        [r'(?im)\{\{(\:[^\{\}]+?)\}\}', path], # templates in the same directory, prefix :
+        [r'(?im)\{\{([^\{\}]+?)\}\}', './templates'], # global templates
+    ]
+    for templateregexp, templatepath in templatetypes:
+        templates = re.findall(templateregexp, wiki)
+        """if os.path.exists('%s/rootpath.wiki' % (path)):
+            f = open('%s/rootpath.wiki' % (path))
+            templatepath = f.read().strip() + '/templates'
+            f.close()"""
         
-        #recursive template replacing
-        htmltemplate = wiki2html(wikitemplate, path, wikifile)
-        wiki = wiki.replace('{{%s}}' % (template), htmltemplate)
+        for template in templates:
+            templatename = template.split('|')[0].split('\n')[0].strip()
+            templateparameters = template.split('|')[1:]
+            wikitemplate = readwikifile(templatepath, '%s.wiki' % templatename.strip(':').lower())
+            # remove noinclude
+            wikitemplate = re.sub(r'(?im)<noinclude>.*?</noinclude>', r'', wikitemplate)
+            # clean includeonly
+            wikitemplate = re.sub(r'(?im)<includeonly>(.*?)</includeonly>', r'\1', wikitemplate)
+            c = 1
+            for templateparameter in templateparameters:
+                parametername = templateparameter.split('=')[0].strip()
+                try:
+                    parametervalue = templateparameter.split('=')[1].strip()
+                except:
+                    parametervalue = u''
+                wikitemplate = wikitemplate.replace('{{{%s}}}' % (parametername), parametervalue)
+                wikitemplate = wikitemplate.replace('{{{%s|}}}' % (parametername), parametervalue)
+                c += 1
+            #remove empty parameters when {{{X|}}}
+            wikitemplate = re.sub(r'{{{\d+\|\s*?}}}', '', wikitemplate)
+            
+            #recursive template replacing
+            htmltemplate = wiki2html(wikitemplate, path, wikifile)
+            wiki = wiki.replace('{{%s}}' % (template), htmltemplate)
     
     return wiki
 
