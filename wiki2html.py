@@ -203,6 +203,7 @@ def textformat(wiki, wikifile):
     wiki = re.sub(r'(?im)\'{3}([^\']+?)\'{3}', r'<b>\1</b>', wiki)
     wiki = re.sub(r'(?im)\'{2}([^\']+?)\'{2}', r'<i>\1</i>', wiki)
     #wiki = re.sub(r'(?im)_([^\_]+?)_', r'<u>\1</u>', wiki) # error: reemplaza los _ de las urls
+    wiki = re.sub(r'(?im)^:', '&nbsp;&nbsp;&nbsp;&nbsp;', wiki)
     
     return wiki
 
@@ -244,7 +245,7 @@ def linksexternal(wiki, wikifile):
 
 def references(wiki, wikifile):
     refs = {}
-    m = re.findall(r'(?im)(<ref( name=["\']([^<>]+?)["\'])?>([^<>]+?)</ref>)', wiki)
+    m = re.findall(r'(?im)(<ref( name=["\']([^<>]+?)["\'])?>(.*?)</ref>)', wiki)
     c = 1
     for i in m:
         #print i
@@ -254,8 +255,8 @@ def references(wiki, wikifile):
         refnum = c
         if refname:
             refs[refname] = refnum
-        wiki = wiki.replace(ref, '<sup>[<a href="#ref%s">%s</a>]</sup>' % (c, c))
-        wiki = wiki.replace('<!--/references-->', '<li id="ref%s">%s</li>\n<!--/references-->' % (c, refcontent))
+        wiki = wiki.replace(ref, '<sup>[<a id="refback%s" href="#ref%s">%s</a>]</sup>' % (c, c, c))
+        wiki = wiki.replace('<!--/references-->', u'<li id="ref%s"><a href="#refback%s">↑</a> %s</li>\n<!--/references-->' % (c, c, refcontent))
         c += 1
     
     m = re.findall(r'(?im)(<ref( name=["\']([^<>]+?)["\'])?\s*/\s*>)', wiki)
