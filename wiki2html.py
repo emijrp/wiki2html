@@ -314,6 +314,8 @@ def toc(wiki, wikifile):
     if '__notoc__' in wiki.lower():
         wiki = re.sub(r'(?im)__NOTOC__', '', wiki)
         return wiki
+    if 'id="toc"' in wiki:
+        return wiki
     
     m = re.findall(r'(?im)<h([234]) id="([^<>]*?)">([^<>]*?)</h[234]>', wiki)
     l2 = 0
