@@ -79,7 +79,8 @@ def templates(wiki, path, wikifile):
         for template in templates:
             templatename = template.split('|')[0].split('\n')[0].strip()
             templateparameters = template.split('|')[1:]
-            wikitemplate = readwikifile(templatepath, '%s.wiki' % templatename.strip(':').lower())
+            templatefilename = re.sub(' ', '-', templatename.strip(':').lower())
+            wikitemplate = readwikifile(templatepath, '%s.wiki' % templatefilename)
             # remove noinclude
             wikitemplate = re.sub(r'(?im)<noinclude>.*?</noinclude>', r'', wikitemplate)
             # clean includeonly
