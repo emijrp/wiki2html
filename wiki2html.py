@@ -19,6 +19,7 @@ import datetime
 import os
 import re
 import sys
+import unicodedata
 
 # ideas:
 # que ponga icono de PDF a los enlaces PDF (a veces se hace pesado en páginas con muchos pdf)
@@ -61,6 +62,9 @@ def sections(wiki, wikifile):
     wiki = re.sub(r'(?im)^==\s*([^=]+?)\s*==', r'<h2 id="\1">\1</h2>', wiki)
     wiki = re.sub(r'(?im)^===\s*([^=]+?)\s*===', r'<h3 id="\1">\1</h3>', wiki)
     wiki = re.sub(r'(?im)^====\s*([^=]+?)\s*====', r'<h4 id="\1">\1</h4>', wiki)
+    m = re.findall(r'(?im)<h([234]) id="([^<>]*?)">', wiki)
+    for i in m:
+        wiki = wiki.replace('<h%s id="%s">' % (i[0], i[1]), '<h%s id="%s">' % (i[0], re.sub(' ', '_', i[1])))
     
     return wiki
 
@@ -208,10 +212,15 @@ def textformat(wiki, wikifile):
     
     return wiki
 
+def removeaccute(s):
+    s = ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    return s
+
 def linksinternal(wiki, wikifile):
     wiki = re.sub(r'(?i)\[\[(%s)\|([^\]]*?)\]\]' % (wikifile.split('.wiki')[0].lower()), r'<b>\2</b>', wiki)
     wiki = re.sub(r'(?i)\[\[(%s)\]\]' % (wikifile.split('.wiki')[0].lower()), r'<b>\1</b>', wiki)
     
+    #[[link|links]]
     m = re.findall(r'(?im)\[\[([^\[\]\|]+?)\|([^\[\]\|]+?)\]\]', wiki)
     for i in m:
         if i[0].startswith('#'):
@@ -221,6 +230,7 @@ def linksinternal(wiki, wikifile):
         else:
             wiki = re.sub(r'(?im)\[\[%s\|%s\]\]' % (i[0], i[1]), '<a href="%s.html">%s</a>' % (re.sub(' ', '-', i[0].lower()), i[1]), wiki)
     
+    #[[link]]
     m = re.findall(r'(?im)\[\[([^\[\]\|]+?)\]\]', wiki)
     for i in m:
         if i.startswith('#'):
@@ -228,7 +238,7 @@ def linksinternal(wiki, wikifile):
         elif '#' in i:
             wiki = re.sub(r'(?im)\[\[%s\]\]' % (i), '<a href="%s.html#%s">%s</a>' % (i.split('#')[0], i.split('#')[1], i), wiki)
         else:
-            wiki = re.sub(r'(?im)\[\[%s\]\]' % (i), '<a href="%s.html">%s</a>' % (re.sub(' ', '-', i.lower()), i), wiki)
+            wiki = re.sub(r'(?im)\[\[%s\]\]' % (i), '<a href="%s.html">%s</a>' % (re.sub(' ', '-', removeaccute(i.lower())), i), wiki)
         
     return wiki
 
